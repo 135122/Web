@@ -12,11 +12,11 @@ module.exports = {
   networks: {
     sepolia:{
       url:"https://eth-sepolia.g.alchemy.com/v2/LOAa3PwwdTDO5QexrMN-7",
-      accounts:["61e025834285a979e8b3bac11664d878a541d5bca9e9efbaeb81ec63a18e5bf6",PRIVATE_KEY_1],
+      accounts:[PRIVATE_KEY,PRIVATE_KEY_1],
       chainId:11155111
     }
   },
   etherscan: {
-    apiKey:"U6SU76J498SNFWDSMBMRU5Z1H7KGE5BTYK"
+    apiKey:ETHERSCAN_API_KEY
   }
 };

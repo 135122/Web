@@ -1,5 +1,5 @@
 const {task} = require("hardhat/config")
-task("deploy-fundme").setAction(async(taskArgs,hre) => {
+task("deploy-fundme","deploy with fundme").setAction(async(taskArgs,hre) => {
     const fundMeFactory = await ethers.getContractFactory("FundMe")
     console.log("contract deploy");
     const fundMe = await fundMeFactory.deploy(180)

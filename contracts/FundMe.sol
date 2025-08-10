@@ -5,7 +5,7 @@ contract FundMe {
     mapping (address=>uint256) public funderToAmounts;
     uint256 MINIMUM_VALUE = 100 * 10 ** 18; // USD
     uint256 constant Target = 1000 * 10 ** 18;
-    AggregatorV3Interface internal dataFeed;
+    AggregatorV3Interface public dataFeed;
 
     uint256 deploymentTimestamp;
     uint256 locktime;
@@ -16,8 +16,10 @@ contract FundMe {
     uint256 public t;
     uint256 public o;
     uint256 public p;
-    constructor(uint256 _locktime){
-        dataFeed = AggregatorV3Interface(0x5fb1616F78dA7aFC9FF79e0371741a747D2a7F22);
+    event  FundWithdrawByOwner(uint256);
+    event  RefundByFunder(address,uint256);
+    constructor(uint256 _locktime,address dataFeedAddr){
+        dataFeed = AggregatorV3Interface(dataFeedAddr);
         owner = msg.sender;
         deploymentTimestamp = block.timestamp;
         locktime = _locktime;
@@ -47,9 +49,9 @@ contract FundMe {
         uint256 ethPrice = uint256(getChainlinkDataFeedLatestAnswer());
         o = ethPrice;
         p = ethAmount;
-        return ethPrice*ethAmount/(10**16);
+        return ethPrice*ethAmount/(10**8);
     }
-    function getFund() external windowClosed onlyOwer{
+    function getFund() external payable windowClosed onlyOwer{
         
         require(convertEthToUsd(address(this).balance) >= Target,"Target is not reachrd");
         w = convertEthToUsd(address(this).balance);
@@ -59,9 +61,12 @@ contract FundMe {
         // bool success = payable(msg.sender).send(address(this).balance);
         // require(success,"tx failed");
         bool sucess;
+        uint256 balance = address(this).balance;
         (sucess,) = payable(msg.sender).call{value:address(this).balance}("");
         require(sucess,"transfer tx failed");
         getFundSucess = true; // flag
+
+        emit FundWithdrawByOwner(balance);
     }
     function transferOwnership(address newOwer) public onlyOwer{
         owner = newOwer;
@@ -69,11 +74,13 @@ contract FundMe {
 
     function refund() external windowClosed {
         require(convertEthToUsd(address(this).balance) < Target,"Target is not reachrd");
-        require(funderToAmounts[msg.sender] != 0,"there is no fund for you"); 
+        require(funderToAmounts[msg.sender] != 0,"there is no fund for you");
+        uint256 balance = funderToAmounts[msg.sender];
         bool sucess;
         (sucess,) = payable(msg.sender).call{value:funderToAmounts[msg.sender]}("");
         require(sucess,"transfer tx failed");
         funderToAmounts[msg.sender] = 0;
+        emit RefundByFunder(msg.sender,balance);
 
     }
 
@@ -93,4 +100,5 @@ contract FundMe {
         require(msg.sender == owner,"This function can only be called by owner");
         _;
     }
+
 }
